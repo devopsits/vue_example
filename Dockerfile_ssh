@@ -1,0 +1,15 @@
+FROM node as builder
+
+COPY github_key .
+RUN eval $(ssh-agent) && \
+    ssh-add github_key && \
+    ssh-keyscan -H github.com >> /etc/ssh/ssh_known_hosts && \
+    git clone git@github.com:phillies/vue_example.git /opt/vue_example
+WORKDIR /opt/vue_example
+RUN npm install && npm run build
+
+
+FROM nginx
+
+COPY --from=builder /opt/vue_example/dist/ /usr/share/nginx/html/
+EXPOSE 80
